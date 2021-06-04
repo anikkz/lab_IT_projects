@@ -1,0 +1,107 @@
+version: '3.3'
+services:
+  ignite-node-1:
+    image: apacheignite/ignite
+    container_name: ignite-node-1
+    ports:
+      - "10800:10800"
+
+  ignite-node-2:
+    image: apacheignite/ignite
+    container_name: ignite-node-2
+    ports:
+      - "10900:10800"
+
+  db-node-1:
+    build:
+      context: infrastructure/docker/mysql
+      dockerfile: Dockerfile
+    container_name: db-node-1
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: sql_test
+      MYSQL_USER: test
+      MYSQL_PASSWORD: pzjqUkMnc7vfNHET
+      MYSQL_ROOT_PASSWORD: '1'
+    command: >
+      --sql-mode='STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION'
+      --general-log=ON
+      --log-queries-not-using-indexes=ON
+    networks:
+      - mai-network
+    ports:
+      - 3360:3306
+    volumes:
+      - db-node-1-data:/var/lib/mysql
+
+  db-node-2:
+    build:
+      context: infrastructure/docker/mysql
+      dockerfile: Dockerfile
+    container_name: db-node-2
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: sql_test
+      MYSQL_USER: test
+      MYSQL_PASSWORD: pzjqUkMnc7vfNHET
+      MYSQL_ROOT_PASSWORD: '1'
+    command: >
+      --sql-mode='STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION'
+      --general-log=ON
+      --log-queries-not-using-indexes=ON
+    networks:
+      - mai-network
+    ports:
+      - 3361:3306
+    volumes:
+      - db-node-2-data:/var/lib/mysql
+
+  db-node-3:
+    build:
+      context: ./infrastructure/docker/mysql
+      dockerfile: Dockerfile
+    container_name: db-node-3
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: sql_test
+      MYSQL_USER: test
+      MYSQL_PASSWORD: pzjqUkMnc7vfNHET
+      MYSQL_ROOT_PASSWORD: '1'
+    command: >
+      --sql-mode='STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION'
+      --general-log=ON
+      --log-queries-not-using-indexes=ON
+    networks:
+      - mai-network
+    ports:
+      - 3362:3306
+    volumes:
+      - db-node-3-data:/var/lib/mysql
+
+  proxysql:
+    build:
+      context: ./infrastructure/docker/proxysql
+      dockerfile: Dockerfile
+    container_name: proxysql
+    command: >
+      --initial
+    volumes:
+      - proxysql-data:/var/lib/proxysql
+    networks:
+      - mai-network
+    ports:
+      # Mysql Client Port
+      - "6033:6033"
+      # Mysql Admin Port
+      - "6032:6032"
+
+volumes:
+  db-node-1-data:
+  db-node-2-data:
+  db-node-3-data:
+  proxysql-data:
+
+networks:
+  mai-network:
+    driver: "bridge"
+    external: false
